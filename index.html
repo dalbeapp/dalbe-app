@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f2d1a">
+<title>DALBE - Somali Butcher Order System</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f2d1a;color:#fff;overscroll-behavior:none;}
+  :root{
+    --dg:#0f2d1a;--dg2:#163d24;--dg3:#1e5230;--dg4:#276b3d;
+    --gold:#f5c842;--white:#ffffff;
+    --green-bright:#27ae60;--green-mid:#219150;
+    --blue:#1565c0;--blue-light:#e3f2fd;
+    --amber:#f39c12;--amber-light:#fff8e1;
+    --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  .app{min-height:100vh;background:var(--dg);max-width:1200px;margin:0 auto;}
+  .top-bar{background:var(--dg2);padding:14px 16px 0;border-bottom:2px solid var(--dg4);position:sticky;top:0;z-index:50;}
+  .app-brand{display:flex;align-items:center;gap:10px;padding-bottom:10px;}
+  .app-brand h1{font-size:28px;font-weight:800;letter-spacing:2px;color:var(--gold);}
+  .brand-sub{margin-left:auto;font-size:12px;color:rgba(255,255,255,0.45);text-align:right;line-height:1.5;}
+  .trial-banner{background:#c47a00;color:#fff;text-align:center;padding:6px 8px;font-size:12px;font-weight:700;}
+  .trial-banner.warning{background:#c0392b;}
+  .tab-bar{display:flex;}
+  .tab-btn{flex:1;padding:12px 4px;background:transparent;border:none;color:rgba(255,255,255,0.55);font-size:12px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;font-family:var(--font-sans);text-align:center;line-height:1.4;}
+  .tab-btn .tab-en{font-size:13px;}
+  .tab-btn .tab-so{font-size:10px;opacity:0.7;}
+  .tab-btn.active{color:var(--gold);border-bottom:3px solid var(--gold);background:rgba(255,255,255,0.04);}
+  .screen{display:none;padding:16px;}
+  .screen.active{display:block;}
+  .section-label{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin:18px 0 10px;display:flex;gap:8px;align-items:center;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--dg4);}
+  .customer-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+  .field-wrap{display:flex;flex-direction:column;gap:4px;}
+  .field-label{font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;}
+  input,textarea,select{background:var(--dg3);border:2px solid var(--dg4);color:var(--white);border-radius:10px;padding:13px 12px;font-size:15px;font-family:var(--font-sans);width:100%;transition:border-color 0.15s;}
+  input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.35);}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold);}
+  .category-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;scrollbar-width:none;}
+  .category-tabs::-webkit-scrollbar{display:none;}
+  .cat-tab{padding:9px 14px;border-radius:22px;border:2px solid var(--dg4);background:var(--dg3);color:rgba(255,255,255,0.7);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:var(--font-sans);transition:all 0.12s;line-height:1.3;text-align:center;}
+  .cat-tab .cat-so{font-size:10px;display:block;opacity:0.65;font-weight:400;}
+  .cat-tab.active{background:var(--gold);border-color:var(--gold);color:var(--dg);}
+  .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;}
+  .item-btn{padding:14px 8px;border-radius:12px;border:2.5px solid var(--dg4);background:var(--dg3);color:var(--white);font-size:15px;font-weight:700;cursor:pointer;text-align:center;font-family:var(--font-sans);transition:all 0.12s;position:relative;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .item-btn .item-so{font-size:11px;color:rgba(255,255,255,0.5);font-weight:400;}
+  .item-btn .item-price{font-size:13px;color:var(--gold);font-weight:800;margin-top:3px;}
+  .item-btn.selected{background:var(--green-mid);border-color:var(--green-bright);}
+  .item-btn.selected .item-so{color:rgba(255,255,255,0.75);}
+  .item-btn.selected .item-price{color:#a8ffca;}
+  .item-qty-badge{position:absolute;top:-9px;right:-9px;background:var(--gold);color:var(--dg);border-radius:50%;width:24px;height:24px;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .cart-table{width:100%;border-collapse:collapse;margin:8px 0;}
+  .cart-table th{font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;padding:8px 6px;border-bottom:1px solid var(--dg4);text-align:left;}
+  .cart-table td{padding:10px 6px;border-bottom:1px solid var(--dg4);font-size:14px;vertical-align:middle;}
+  .cart-table tr:last-child td{border-bottom:none;}
+  .item-name-cell{font-weight:600;}
+  .item-so-cell{font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-top:2px;}
+  .qty-ctrl{display:flex;align-items:center;gap:7px;}
+  .qty-btn{width:30px;height:30px;border-radius:50%;border:2px solid var(--dg4);background:var(--dg4);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font-sans);color:var(--white);font-weight:700;}
+  .qty-num{font-weight:700;min-width:18px;text-align:center;font-size:15px;}
+  .price-cell{text-align:right;font-weight:700;color:var(--gold);}
+  .total-row td{border-top:2px solid var(--dg4);padding-top:12px;font-size:16px;font-weight:800;}
+  .total-amount{text-align:right;color:var(--gold);font-size:18px;}
+  textarea{resize:none;height:68px;font-size:14px;}
+  .submit-btn{width:100%;padding:20px;background:var(--gold);color:var(--dg);border:none;border-radius:12px;font-size:20px;font-weight:800;cursor:pointer;font-family:var(--font-sans);margin-top:10px;}
+  .submit-btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .submit-btn .btn-so{font-size:13px;display:block;font-weight:600;opacity:0.7;margin-top:2px;}
+  .display-screen{text-align:center;padding:24px 16px;}
+  .display-now{background:var(--dg3);border:3px solid var(--gold);border-radius:18px;padding:28px 20px;margin-bottom:18px;}
+  .display-now-label{font-size:15px;color:rgba(255,255,255,0.55);font-weight:700;margin-bottom:16px;}
+  .display-order-num{font-size:90px;font-weight:900;color:var(--gold);line-height:1;}
+  .display-name{font-size:20px;font-weight:700;margin-top:10px;}
+  .display-status-big{display:inline-block;padding:9px 24px;border-radius:28px;font-size:17px;font-weight:800;margin-top:10px;}
+  .ds-pending{background:var(--amber-light);color:#b37a00;}
+  .ds-preparing{background:var(--blue-light);color:var(--blue);}
+  .ds-ready{background:#e8f5e9;color:#1b5e20;}
+  .ds-collected{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);}
+  .queue-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:9px;}
+  .queue-card{background:var(--dg3);border:2px solid var(--dg4);border-radius:11px;padding:12px 6px;text-align:center;}
+  .queue-card-num{font-size:28px;font-weight:900;}
+  .queue-card-name{font-size:11px;color:rgba(255,255,255,0.5);margin-top:3px;}
+  .queue-card.is-ready{border-color:var(--green-bright);}
+  .queue-card.is-ready .queue-card-num{color:var(--green-bright);}
+  .pin-lock{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;min-height:500px;}
+  .pin-icon{font-size:52px;margin-bottom:16px;}
+  .pin-title{font-size:22px;font-weight:800;color:var(--gold);margin-bottom:6px;text-align:center;}
+  .pin-subtitle{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:32px;text-align:center;}
+  .pin-dots{display:flex;gap:14px;margin-bottom:32px;}
+  .pin-dot{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--dg4);transition:all 0.15s;}
+  .pin-dot.filled{background:var(--gold);border-color:var(--gold);}
+  .pin-dot.error{background:#e74c3c;border-color:#e74c3c;}
+  .pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
+  .pin-key{padding:20px 10px;border-radius:14px;border:2px solid var(--dg4);background:var(--dg3);color:var(--white);font-size:22px;font-weight:800;cursor:pointer;font-family:var(--font-sans);text-align:center;}
+  .pin-key:active{transform:scale(0.94);}
+  .pin-key.del{font-size:18px;color:rgba(255,255,255,0.6);}
+  .pin-key.empty{border:none;background:transparent;cursor:default;}
+  .pin-error-msg{color:#e74c3c;font-size:14px;font-weight:700;margin-top:16px;min-height:20px;}
+  .change-pin-link{margin-top:20px;font-size:13px;color:rgba(255,255,255,0.35);cursor:pointer;text-decoration:underline;}
+  .staff-header{background:var(--dg2);margin:-16px -16px 14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--dg4);}
+  .staff-header h2{font-size:19px;font-weight:700;}
+  .staff-header h2 span{font-size:12px;font-weight:400;color:rgba(255,255,255,0.45);display:block;margin-top:2px;}
+  .staff-header-right{display:flex;align-items:center;gap:10px;}
+  .active-badge{background:var(--gold);color:var(--dg);border-radius:18px;padding:5px 13px;font-size:13px;font-weight:800;}
+  .lock-btn{padding:7px 13px;border-radius:18px;border:2px solid var(--dg4);background:transparent;color:rgba(255,255,255,0.6);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-sans);}
+  .filter-row{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap;}
+  .filter-btn{padding:7px 14px;border-radius:18px;border:2px solid var(--dg4);background:var(--dg3);color:rgba(255,255,255,0.65);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-sans);}
+  .filter-btn.active{background:var(--gold);border-color:var(--gold);color:var(--dg);}
+  .order-card{background:var(--dg3);border-radius:14px;border:2px solid var(--dg4);margin-bottom:12px;overflow:hidden;}
+  .order-card-header{display:flex;justify-content:space-between;align-items:flex-start;padding:13px 14px;background:var(--dg2);border-bottom:1px solid var(--dg4);}
+  .order-num-big{font-size:32px;font-weight:900;color:var(--gold);line-height:1;}
+  .order-name-k{font-size:16px;font-weight:700;margin-top:3px;}
+  .order-phone-k{font-size:13px;color:rgba(255,255,255,0.5);margin-top:2px;}
+  .status-badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;margin-bottom:3px;}
+  .status-pending{background:var(--amber-light);color:#b37a00;}
+  .status-preparing{background:var(--blue-light);color:var(--blue);}
+  .status-ready{background:#e8f5e9;color:#1b5e20;}
+  .status-collected{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);}
+  .order-items-list{padding:12px 14px;font-size:14px;line-height:1.9;}
+  .order-item-line{display:flex;justify-content:space-between;align-items:baseline;}
+  .order-item-left{display:flex;gap:7px;}
+  .order-item-qty{font-weight:800;color:var(--gold);min-width:26px;}
+  .order-item-price{color:rgba(255,255,255,0.45);font-size:13px;}
+  .order-total-line{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--dg4);font-weight:800;font-size:15px;}
+  .order-total-amt{color:var(--gold);}
+  .order-notes-k{font-size:13px;color:rgba(255,255,255,0.45);margin-top:6px;font-style:italic;}
+  .order-actions{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--dg4);flex-wrap:wrap;}
+  .action-btn{flex:1;min-width:100px;padding:13px 6px;border-radius:11px;border:2.5px solid var(--dg4);background:var(--dg4);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-sans);color:var(--white);text-align:center;line-height:1.3;}
+  .action-btn .btn-so{font-size:11px;font-weight:400;opacity:0.65;display:block;margin-top:2px;}
+  .action-btn.step-btn{background:var(--green-mid);border-color:var(--green-bright);}
+  .action-btn.ready-btn{background:var(--green-bright);border-color:var(--green-bright);font-size:15px;}
+  .action-btn.wa-btn{background:#128C7E;border-color:#075E54;}
+  .action-btn:disabled{opacity:0.3;cursor:not-allowed;}
+  .empty-state{text-align:center;padding:50px 20px;color:rgba(255,255,255,0.35);}
+  .empty-state p{font-size:16px;margin-top:10px;}
+  .settings-section{background:var(--dg3);border:1.5px solid var(--dg4);border-radius:14px;padding:16px;margin-bottom:16px;}
+  .settings-section h3{font-size:15px;font-weight:700;color:var(--gold);margin-bottom:14px;}
+  .setting-row{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+  .setting-row label{font-size:12px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.8px;}
+  .setting-row input{font-size:14px;padding:11px 12px;}
+  .cat-editor{margin-bottom:10px;background:var(--dg2);border-radius:10px;padding:12px;}
+  .cat-editor-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .items-editor{display:flex;flex-direction:column;gap:6px;}
+  .item-editor-row{display:flex;gap:6px;align-items:center;}
+  .item-editor-row input{flex:1;font-size:13px;padding:8px 10px;}
+  .item-editor-row input.price-inp{max-width:70px;flex:none;text-align:center;}
+  .icon-btn{width:32px;height:32px;border-radius:8px;border:none;font-size:16px;cursor:pointer;font-family:var(--font-sans);flex-shrink:0;}
+  .del-btn{background:#c0392b;color:white;}
+  .add-item-btn{margin-top:6px;padding:8px;border-radius:8px;border:1.5px dashed var(--dg4);background:transparent;color:rgba(255,255,255,0.5);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-sans);width:100%;}
+  .add-cat-btn{width:100%;padding:12px;border-radius:10px;border:2px dashed var(--dg4);background:transparent;color:rgba(255,255,255,0.5);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-sans);}
+  .save-settings-btn{width:100%;padding:16px;background:var(--gold);color:var(--dg);border:none;border-radius:12px;font-size:17px;font-weight:800;cursor:pointer;font-family:var(--font-sans);margin-top:6px;}
+  .color-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .color-swatch{width:36px;height:36px;border-radius:8px;cursor:pointer;border:3px solid transparent;}
+  .color-swatch.active{border-color:var(--white);}
+  .pin-change-box{background:var(--dg3);border:2px solid var(--dg4);border-radius:12px;padding:16px;margin-top:4px;}
+  .pin-change-box label{font-size:12px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:6px;}
+  .pin-change-box input{margin-bottom:10px;letter-spacing:6px;font-size:18px;font-weight:800;}
+  .pin-save-btn{width:100%;padding:12px;background:var(--green-mid);color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font-sans);}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--gold);color:var(--dg);padding:12px 24px;border-radius:26px;font-size:14px;font-weight:800;transition:transform 0.3s;z-index:999;box-shadow:0 4px 18px rgba(0,0,0,0.4);}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .col-header-hint{font-size:10px;font-weight:600;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:6px;letter-spacing:0.5px;}
+
+  /* Trial expired overlay */
+  .expired-overlay{
+    position:fixed;inset:0;background:rgba(15,45,26,0.97);
+    z-index:9999;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:30px;text-align:center;
+  }
+  .expired-icon{font-size:70px;margin-bottom:18px;}
+  .expired-title{font-size:28px;font-weight:900;color:var(--gold);margin-bottom:12px;}
+  .expired-text{font-size:16px;color:rgba(255,255,255,0.85);margin-bottom:8px;line-height:1.5;max-width:420px;}
+  .expired-text-so{font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:24px;line-height:1.5;max-width:420px;}
+  .expired-contact{background:var(--dg3);border:2px solid var(--gold);border-radius:14px;padding:18px;max-width:380px;width:100%;}
+  .expired-contact-label{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .expired-contact-name{font-size:18px;font-weight:700;color:var(--white);margin-bottom:4px;}
+  .expired-contact-phone{font-size:16px;color:rgba(255,255,255,0.8);}
+  .extend-btn{margin-top:20px;padding:14px 28px;background:var(--gold);color:var(--dg);border:none;border-radius:30px;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-sans);}
+
+  @media (min-width:768px){
+    .display-order-num{font-size:140px;}
+    .items-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="trial-banner" class="trial-banner" style="display:none"></div>
+
+  <div class="top-bar">
+    <div class="app-brand">
+      <h1 id="brand-name">DALBE</h1>
+      <div class="brand-sub" id="brand-sub">Somali Butcher - Halal Meat<br>Order System</div>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showScreen('order',this)"><div class="tab-en">New Order</div><div class="tab-so">Dalbo Hadda</div></button>
+      <button class="tab-btn" onclick="showScreen('display',this)"><div class="tab-en">Order Board</div><div class="tab-so">Liiska</div></button>
+      <button class="tab-btn" onclick="showScreen('staff',this)"><div class="tab-en">🔒 Staff</div><div class="tab-so">Shaqaalaha</div></button>
+      <button class="tab-btn" onclick="trySettings(this)"><div class="tab-en">⚙ Admin</div><div class="tab-so">Maamulka</div></button>
+    </div>
+  </div>
+
+  <div id="screen-order" class="screen active">
+    <div class="section-label">Customer Details · Xogta Macmiilka</div>
+    <div class="customer-row">
+      <div class="field-wrap"><div class="field-label">Name · Magac</div><input type="text" id="cust-name"/></div>
+      <div class="field-wrap"><div class="field-label">Phone · Telefoon</div><input type="tel" id="cust-phone"/></div>
+    </div>
+    <div class="section-label">Select Items · Dooro Cuntooyinka</div>
+    <div class="category-tabs" id="cat-tabs"></div>
+    <div class="items-grid" id="items-grid"></div>
+    <div id="cart-area" style="display:none">
+      <div class="section-label">Order Summary · Koobidda Dalabka</div>
+      <table class="cart-table">
+        <thead><tr>
+          <th>Item · Shay</th>
+          <th style="text-align:center">Qty</th>
+          <th style="text-align:right">Price</th>
+          <th style="text-align:right">Total</th>
+        </tr></thead>
+        <tbody id="cart-tbody"></tbody>
+        <tfoot id="cart-tfoot"></tfoot>
+      </table>
+    </div>
+    <div class="section-label">Notes · Faallo</div>
+    <textarea id="order-notes"></textarea>
+    <button class="submit-btn" onclick="submitOrder()">Place Order · Geli Dalabka<span class="btn-so">Tap to confirm your order</span></button>
+  </div>
+
+  <div id="screen-display" class="screen">
+    <div class="display-screen">
+      <div class="display-now">
+        <div class="display-now-label">NOW SERVING · WAXA HADDA LOO ADEEGAYAA</div>
+        <div id="display-num" class="display-order-num">—</div>
+        <div id="display-name" class="display-name"></div>
+        <div id="display-status" class="display-status-big ds-pending" style="display:none"></div>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">All Orders · Dhamaan Dalabyada</div>
+      <div class="queue-grid" id="queue-grid"></div>
+    </div>
+  </div>
+
+  <div id="screen-staff" class="screen">
+    <div id="pin-lock-view" class="pin-lock">
+      <div class="pin-icon">🔐</div>
+      <div class="pin-title">Staff Access · Qaybta Shaqaalaha</div>
+      <div class="pin-subtitle">Enter your 4-digit PIN to continue<br>Geli lambarka sirta ee 4-jibaaranku</div>
+      <div class="pin-dots"><div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div><div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div></div>
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="pinPress('1')">1</button>
+        <button class="pin-key" onclick="pinPress('2')">2</button>
+        <button class="pin-key" onclick="pinPress('3')">3</button>
+        <button class="pin-key" onclick="pinPress('4')">4</button>
+        <button class="pin-key" onclick="pinPress('5')">5</button>
+        <button class="pin-key" onclick="pinPress('6')">6</button>
+        <button class="pin-key" onclick="pinPress('7')">7</button>
+        <button class="pin-key" onclick="pinPress('8')">8</button>
+        <button class="pin-key" onclick="pinPress('9')">9</button>
+        <button class="pin-key empty"></button>
+        <button class="pin-key" onclick="pinPress('0')">0</button>
+        <button class="pin-key del" onclick="pinDel()">⌫</button>
+      </div>
+      <div class="pin-error-msg" id="pin-error"></div>
+      <div class="change-pin-link" onclick="showToast('Change PIN in ⚙ Settings tab')">Forgot PIN? Contact admin</div>
+    </div>
+    <div id="staff-unlocked-view" style="display:none">
+      <div class="staff-header">
+        <div><h2>Kitchen Board<span>Xaashida Kariyeyaasha</span></h2></div>
+        <div class="staff-header-right">
+          <div class="active-badge" id="active-count">0 active</div>
+          <button class="lock-btn" onclick="lockStaff()">🔒 Lock</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('pending',this)">Pending</button>
+        <button class="filter-btn" onclick="setFilter('preparing',this)">Preparing</button>
+        <button class="filter-btn" onclick="setFilter('ready',this)">Ready</button>
+        <button class="filter-btn" onclick="setFilter('collected',this)">Collected</button>
+      </div>
+      <div id="kitchen-orders"></div>
+    </div>
+  </div>
+
+  <div id="screen-settings" class="screen">
+
+    <!-- SETTINGS PIN GATE -->
+    <div id="settings-lock-view" class="pin-lock">
+      <div class="pin-icon">🛡️</div>
+      <div class="pin-title">Admin Access · Maamulka</div>
+      <div class="pin-subtitle">Enter Admin PIN to access settings<br>Geli PIN-ka Maamulka si aad hagaajinta u gasho</div>
+      <div class="pin-dots" id="sd0-wrap">
+        <div class="pin-dot" id="sd0"></div><div class="pin-dot" id="sd1"></div>
+        <div class="pin-dot" id="sd2"></div><div class="pin-dot" id="sd3"></div>
+      </div>
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="sPinPress('1')">1</button>
+        <button class="pin-key" onclick="sPinPress('2')">2</button>
+        <button class="pin-key" onclick="sPinPress('3')">3</button>
+        <button class="pin-key" onclick="sPinPress('4')">4</button>
+        <button class="pin-key" onclick="sPinPress('5')">5</button>
+        <button class="pin-key" onclick="sPinPress('6')">6</button>
+        <button class="pin-key" onclick="sPinPress('7')">7</button>
+        <button class="pin-key" onclick="sPinPress('8')">8</button>
+        <button class="pin-key" onclick="sPinPress('9')">9</button>
+        <button class="pin-key empty"></button>
+        <button class="pin-key" onclick="sPinPress('0')">0</button>
+        <button class="pin-key del" onclick="sPinDel()">⌫</button>
+      </div>
+      <div class="pin-error-msg" id="settings-pin-error"></div>
+      <div class="change-pin-link" onclick="showToast('Contact Khader Ali to reset Admin PIN')">Forgot Admin PIN?</div>
+    </div>
+
+    <!-- SETTINGS CONTENT (shown after PIN) -->
+    <div id="settings-unlocked-view" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#163d24;margin:-16px -16px 16px;padding:14px 16px;border-bottom:2px solid #276b3d;">
+      <div style="font-size:18px;font-weight:800;color:#f5c842;">⚙ Admin Settings</div>
+      <button class="lock-btn" onclick="lockSettings()">🔒 Lock Settings</button>
+    </div>
+
+    <!-- TRIAL CONTROL PANEL -->
+    <div class="settings-section" style="border:2px solid #f5c842;">
+      <h3 style="color:#f5c842;">⏱ Trial Control · Maamulka Tijaabada</h3>
+      <div id="trial-status-display" style="background:#163d24;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:rgba(255,255,255,0.7);">Checking...</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="startTrialNow()" style="flex:1;padding:14px;background:#27ae60;color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font-sans);">
+          ▶ Start Trial Now<span style="display:block;font-size:11px;font-weight:400;opacity:0.8;margin-top:2px;">Bilow Tijaabada Hadda</span>
+        </button>
+        <button onclick="resetTrialStorage()" style="flex:1;padding:14px;background:#c0392b;color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font-sans);">
+          🔄 Reset for New Client<span style="display:block;font-size:11px;font-weight:400;opacity:0.8;margin-top:2px;">Dib u Dejin Macmiil Cusub</span>
+        </button>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:10px;line-height:1.6;">
+        ▶ <strong>Start Trial</strong> — tap this when you hand the iPad to the client.<br>
+        🔄 <strong>Reset</strong> — tap this before setting up a new client on this device.
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Shop Identity · Xogta Dukaanka</h3>
+      <div class="setting-row"><label>App Name</label><input type="text" id="set-name"/></div>
+      <div class="setting-row"><label>Shop Subtitle</label><input type="text" id="set-sub1"/></div>
+      <div class="setting-row"><label>Tagline Line 2</label><input type="text" id="set-sub2"/></div>
+      <div class="setting-row"><label>WhatsApp Message</label><input type="text" id="set-wamsg"/></div>
+    </div>
+    <div class="settings-section">
+      <h3>Staff PIN · Lambarka Sirta</h3>
+      <div class="pin-change-box">
+        <label>Current PIN</label><input type="password" id="pin-current" placeholder="••••" maxlength="4"/>
+        <label>New PIN</label><input type="password" id="pin-new" placeholder="••••" maxlength="4"/>
+        <label>Confirm</label><input type="password" id="pin-confirm" placeholder="••••" maxlength="4"/>
+        <button class="pin-save-btn" onclick="changePin()">Update PIN · Bedel PIN-ka</button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>Accent Color · Midabka</h3>
+      <div class="color-row" id="color-swatches"></div>
+    </div>
+    <div class="settings-section">
+      <h3>Menu Items & Prices</h3>
+      <div id="menu-editor"></div>
+      <button class="add-cat-btn" onclick="addCategory()">+ Add Category</button>
+    </div>
+    <button class="save-settings-btn" onclick="saveSettings()">Save & Apply · Kaydi oo Dhaq</button>
+    </div><!-- end settings-unlocked-view -->
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- TRIAL EXPIRED OVERLAY (shown when trial ends) -->
+<div id="expired-overlay" class="expired-overlay" style="display:none">
+  <div class="expired-icon">⏰</div>
+  <div class="expired-title">Trial Ended · Tijaabadu Way Dhamaatay</div>
+  <div class="expired-text">Your free 14-day trial of DALBE has ended. To continue using the app, please contact us to activate your subscription.</div>
+  <div class="expired-text-so">Tijaabada bilaashka ah ee 14-cisho ee DALBE waa dhamaatay. Si aad u sii isticmaasho, fadlan nala soo xiriir.</div>
+  <div class="expired-contact">
+    <div class="expired-contact-label">Contact · Xiriir</div>
+    <div class="expired-contact-name" id="owner-name">Khader</div>
+    <div class="expired-contact-phone" id="owner-phone">+1 (612) 555-0000</div>
+  </div>
+  <button class="extend-btn" onclick="promptExtend()">Enter Activation Code</button>
+</div>
+
+<script>
+// =============================================
+// TRIAL CONFIG — EDIT THESE VALUES
+// =============================================
+const TRIAL_CONFIG = {
+  trialDays: 7,                           // Length of free trial
+  ownerName: 'Khader Ali',               // Your name shown when trial expires
+  ownerPhone: '+1 (671) 222-6543',       // Your phone shown when trial expires
+  activationCode: 'DALBE-PAID-2026',         // Secret code to unlock paid version
+  adminPin: '9999'                          // Admin PIN for Settings tab
+};
+// =============================================
+
+const STATUSES=['pending','preparing','ready','collected'];
+const STATUS_LABELS={
+  pending:{en:'Pending',so:'La sugayo'},
+  preparing:{en:'Preparing',so:'La diyaarinayaa'},
+  ready:{en:'READY',so:'DIYAAR AH'},
+  collected:{en:'Collected',so:'La qaatay'}
+};
+const ACCENT_COLORS=['#f5c842','#e05c2a','#2980b9','#8e44ad','#e74c3c','#1abc9c','#e91e63'];
+
+const DEFAULT_CONFIG={
+  name:'DALBE',sub1:'Somali Butcher - Halal Meat',sub2:'Order System',
+  wamsg:'Dalabka numberkiisu yahay #{id}, {name} waa diyaar. Fadlan u gudub miiska lacag bixinta. Your order #{id} at DALBE is ready for pickup, please proceed to payment counter. Mahadsanid!',
+  accent:'#f5c842',pin:'1234',
+  menu:{
+    "Beef / Hilib Lo'aad":[
+      {en:'Minced',so:'Shiid-shiid/Duqad',price:5},{en:'Suqar',so:'Suqaar',price:8},
+      {en:'Odkac',so:'Odkac',price:10},{en:'Steek',so:'Steak',price:12},
+      {en:'Large-cut',so:'Waslad',price:9},{en:'Liver',so:'Beer',price:6}
+    ],
+    'Goat / Hilib Ari':[
+      {en:'Leg',so:'Lug',price:15},{en:'Ribs',so:'Feero',price:12},
+      {en:'Shoulder',so:'Garab',price:13},{en:'Liver',so:'Beer',price:6},
+      {en:'Kidneys',so:'Kelyo',price:5}
+    ],
+    'Chicken / Digaag':[
+      {en:'Wings',so:'Baalasha',price:7},{en:'Leg',so:'Lugaha',price:7},
+      {en:'Breast',so:'Laabta',price:8}
+    ],
+    'Fish / Kalluun':[{en:'Salmon',so:'Salmon',price:14},{en:'Cutfish',so:'Kalluun',price:9}],
+    'Camel / Geel':[{en:'Large-cut',so:'Waslad',price:18},{en:'Liver',so:'Beer',price:7}]
+  }
+};
+
+// Load config from localStorage so changes persist
+let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+try {
+  const saved = localStorage.getItem('dalbe_config');
+  if (saved) config = Object.assign({}, DEFAULT_CONFIG, JSON.parse(saved));
+} catch(e){}
+
+let cart={},orders=[],counter=1,kFilter='all',currentCat='',staffUnlocked=false,settingsUnlocked=false,pinEntry='',sPinEntry='';
+
+// === TRIAL LOCK SYSTEM ===
+function checkTrial(){
+  // If permanently activated, skip all checks
+  if(localStorage.getItem('dalbe_activated')==='yes'){
+    document.getElementById('trial-banner').style.display='none';
+    return false;
+  }
+
+  document.getElementById('owner-name').textContent = TRIAL_CONFIG.ownerName;
+  document.getElementById('owner-phone').textContent = TRIAL_CONFIG.ownerPhone;
+
+  // Check if trial has been manually started by admin
+  const trialStart = localStorage.getItem('dalbe_trial_start');
+
+  if(!trialStart){
+    // Trial NOT yet started — show "waiting" banner, app still works
+    const banner = document.getElementById('trial-banner');
+    banner.className = 'trial-banner';
+    banner.textContent = '⏳ Trial not yet started · Tijaabadu weli ma bilaaban';
+    banner.style.display = 'block';
+    return false;
+  }
+
+  // Trial has been started — count days
+  const start = parseInt(trialStart);
+  const now = Date.now();
+  const daysUsed = Math.floor((now - start) / (1000*60*60*24));
+  const daysLeft = TRIAL_CONFIG.trialDays - daysUsed;
+
+  if(daysLeft <= 0){
+    document.getElementById('expired-overlay').style.display='flex';
+    return true;
+  }
+
+  const banner = document.getElementById('trial-banner');
+  if(daysLeft <= 2){
+    banner.className = 'trial-banner warning';
+    banner.textContent = `⏰ Trial ends in ${daysLeft} day${daysLeft===1?'':'s'} · Tijaabadu way dhamaanaysaa`;
+  } else {
+    banner.className = 'trial-banner';
+    banner.textContent = `✓ Free Trial · Tijaabo Bilaash · ${daysLeft} days remaining`;
+  }
+  banner.style.display = 'block';
+  return false;
+}
+
+
+function startTrialNow(){
+  if(localStorage.getItem('dalbe_activated')==='yes'){
+    showToast('This app is already fully activated!');
+    return;
+  }
+  const existing = localStorage.getItem('dalbe_trial_start');
+  if(existing){
+    const d = new Date(parseInt(existing));
+    showToast('Trial already started on '+d.toLocaleDateString());
+    return;
+  }
+  if(!confirm('Start the 7-day free trial NOW for this client?\nWarning: This cannot be undone.\n\nBilow tijaabada 7-cisho hadda?')){return;}
+  localStorage.setItem('dalbe_trial_start', Date.now().toString());
+  checkTrial();
+  showToast('Trial started! · Tijaabada waa bilaabatay!');
+  renderTrialStatus();
+}
+
+function resetTrialStorage(){
+  // Admin-only: completely wipe trial data (use before handing to new client)
+  if(!confirm('RESET trial for this device?\nThis clears all trial data so it can be handed to a new client.\n\nXaqiiji dib-u-dejinta?')){return;}
+  localStorage.removeItem('dalbe_trial_start');
+  localStorage.removeItem('dalbe_install');
+  localStorage.removeItem('dalbe_activated');
+  localStorage.removeItem('dalbe_config');
+  checkTrial();
+  showToast('Trial reset! Hand device to client and tap Start Trial.');
+  renderTrialStatus();
+}
+
+function renderTrialStatus(){
+  const el = document.getElementById('trial-status-display');
+  if(!el) return;
+  const activated = localStorage.getItem('dalbe_activated')==='yes';
+  const started   = localStorage.getItem('dalbe_trial_start');
+
+  if(activated){
+    el.innerHTML = '<span style="color:#27ae60;font-weight:800;">✅ FULLY ACTIVATED — No expiry</span>';
+    return;
+  }
+  if(!started){
+    el.innerHTML = '<span style="color:#f39c12;font-weight:700;">⏳ Trial not started yet</span>';
+    return;
+  }
+  const daysUsed = Math.floor((Date.now()-parseInt(started))/(1000*60*60*24));
+  const daysLeft = TRIAL_CONFIG.trialDays - daysUsed;
+  const startDate = new Date(parseInt(started)).toLocaleDateString();
+  const endDate   = new Date(parseInt(started) + TRIAL_CONFIG.trialDays*86400000).toLocaleDateString();
+  if(daysLeft <= 0){
+    el.innerHTML = `<span style="color:#e74c3c;font-weight:800;">🔒 TRIAL EXPIRED — Awaiting payment</span>`;
+  } else {
+    el.innerHTML = `<span style="color:#f5c842;font-weight:700;">🟢 Trial Active: Day ${daysUsed+1} of ${TRIAL_CONFIG.trialDays} &nbsp;|&nbsp; Started: ${startDate} &nbsp;|&nbsp; Ends: ${endDate} &nbsp;|&nbsp; <strong>${daysLeft} days left</strong></span>`;
+  }
+}
+
+function promptExtend(){
+  const code = prompt('Enter activation code:');
+  if(code === TRIAL_CONFIG.activationCode){
+    localStorage.setItem('dalbe_activated','yes');
+    document.getElementById('expired-overlay').style.display='none';
+    document.getElementById('trial-banner').style.display='none';
+    showToast('Activated! · Waa la xirxiriiyay!');
+  } else if (code !== null) {
+    alert('Invalid code. Contact ' + TRIAL_CONFIG.ownerName + ' at ' + TRIAL_CONFIG.ownerPhone);
+  }
+}
+
+// PIN
+function pinPress(d){if(pinEntry.length>=4)return;pinEntry+=d;updateDots();if(pinEntry.length===4)setTimeout(checkPin,120);}
+function pinDel(){pinEntry=pinEntry.slice(0,-1);updateDots();document.getElementById('pin-error').textContent='';}
+function updateDots(){for(let i=0;i<4;i++){document.getElementById('d'+i).className='pin-dot'+(i<pinEntry.length?' filled':'');}}
+function checkPin(){
+  if(pinEntry===config.pin){
+    staffUnlocked=true;
+    document.getElementById('pin-lock-view').style.display='none';
+    document.getElementById('staff-unlocked-view').style.display='block';
+    pinEntry='';updateDots();document.getElementById('pin-error').textContent='';
+    renderKitchen();
+  }else{
+    for(let i=0;i<4;i++)document.getElementById('d'+i).className='pin-dot error';
+    document.getElementById('pin-error').textContent='Wrong PIN · PIN-ka waa qalad';
+    setTimeout(()=>{pinEntry='';updateDots();},900);
+  }
+}
+function lockStaff(){
+  staffUnlocked=false;
+  document.getElementById('pin-lock-view').style.display='flex';
+  document.getElementById('staff-unlocked-view').style.display='none';
+  pinEntry='';updateDots();document.getElementById('pin-error').textContent='';
+}
+
+function trySettings(btn){showScreen('settings',btn);}
+function lockSettings(){
+  settingsUnlocked=false;
+  document.getElementById('settings-lock-view').style.display='flex';
+  document.getElementById('settings-unlocked-view').style.display='none';
+  sPinEntry='';updateSDots();
+  document.getElementById('settings-pin-error').textContent='';
+}
+function sPinPress(d){if(sPinEntry.length>=4)return;sPinEntry+=d;updateSDots();if(sPinEntry.length===4)setTimeout(checkSPin,120);}
+function sPinDel(){sPinEntry=sPinEntry.slice(0,-1);updateSDots();document.getElementById('settings-pin-error').textContent='';}
+function updateSDots(){for(let i=0;i<4;i++){document.getElementById('sd'+i).className='pin-dot'+(i<sPinEntry.length?' filled':'');}}
+function checkSPin(){
+  const adminPin=TRIAL_CONFIG.adminPin||'9999';
+  if(sPinEntry===adminPin){
+    settingsUnlocked=true;
+    document.getElementById('settings-lock-view').style.display='none';
+    document.getElementById('settings-unlocked-view').style.display='block';
+    sPinEntry='';updateSDots();
+    document.getElementById('settings-pin-error').textContent='';
+    renderSettingsEditor();
+    renderTrialStatus();
+  }else{
+    for(let i=0;i<4;i++)document.getElementById('sd'+i).className='pin-dot error';
+    document.getElementById('settings-pin-error').textContent='Wrong PIN · PIN-ka waa qalad';
+    setTimeout(()=>{sPinEntry='';updateSDots();},900);
+  }
+}
+
+function changePin(){
+  const cur=document.getElementById('pin-current').value;
+  const nw=document.getElementById('pin-new').value;
+  const conf=document.getElementById('pin-confirm').value;
+  if(cur!==config.pin){showToast('Current PIN is wrong');return;}
+  if(nw.length!==4||!/^\d{4}$/.test(nw)){showToast('PIN must be 4 digits');return;}
+  if(nw!==conf){showToast('PINs do not match');return;}
+  config.pin=nw;persistConfig();
+  document.getElementById('pin-current').value='';
+  document.getElementById('pin-new').value='';
+  document.getElementById('pin-confirm').value='';
+  showToast('PIN updated!');
+}
+
+function persistConfig(){try{localStorage.setItem('dalbe_config',JSON.stringify(config));}catch(e){}}
+
+function applyConfig(){
+  document.getElementById('brand-name').textContent=config.name;
+  document.getElementById('brand-sub').innerHTML=config.sub1+'<br>'+config.sub2;
+  document.documentElement.style.setProperty('--gold',config.accent);
+  currentCat=Object.keys(config.menu)[0]||'';
+  buildCatTabs();buildItemsGrid();
+}
+function showScreen(name,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='staff'){
+    if(!staffUnlocked){
+      document.getElementById('pin-lock-view').style.display='flex';
+      document.getElementById('staff-unlocked-view').style.display='none';
+      pinEntry='';updateDots();document.getElementById('pin-error').textContent='';
+    }else renderKitchen();
+  }
+  if(name==='display')renderDisplay();
+  if(name==='settings'){
+    if(!settingsUnlocked){
+      document.getElementById('settings-lock-view').style.display='flex';
+      document.getElementById('settings-unlocked-view').style.display='none';
+      sPinEntry='';updateSDots();
+      document.getElementById('settings-pin-error').textContent='';
+    }else renderSettingsEditor();
+  }
+}
+function buildCatTabs(){
+  document.getElementById('cat-tabs').innerHTML=Object.keys(config.menu).map(cat=>{
+    const p=cat.split('/');
+    return `<button class="cat-tab${cat===currentCat?' active':''}" onclick="selectCat(this,'${esc(cat)}')">${p[0].trim()}<span class="cat-so">${p[1]?p[1].trim():''}</span></button>`;
+  }).join('');
+}
+function selectCat(btn,cat){currentCat=cat;document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildItemsGrid();}
+function buildItemsGrid(){
+  const items=config.menu[currentCat]||[];
+  document.getElementById('items-grid').innerHTML=items.map(it=>{
+    const key=currentCat+':'+it.en;const qty=cart[key]?cart[key].qty:0;
+    return `<button class="item-btn${qty>0?' selected':''}" onclick="toggleItem('${esc(currentCat)}','${esc(it.en)}','${esc(it.so)}',${it.price})">${qty>0?`<span class="item-qty-badge">${qty}</span>`:''}<div>${it.en}</div><div class="item-so">${it.so}</div><div class="item-price">$${it.price}</div></button>`;
+  }).join('');
+}
+function toggleItem(cat,en,so,price){const key=cat+':'+en;if(!cart[key])cart[key]={cat,en,so,price,qty:1};else cart[key].qty++;buildItemsGrid();renderCart();}
+function changeQty(key,d){if(!cart[key])return;cart[key].qty+=d;if(cart[key].qty<=0)delete cart[key];buildItemsGrid();renderCart();}
+function renderCart(){
+  const keys=Object.keys(cart);const area=document.getElementById('cart-area');
+  if(!keys.length){area.style.display='none';return;}area.style.display='block';
+  let total=0;
+  document.getElementById('cart-tbody').innerHTML=keys.map(k=>{
+    const it=cart[k];const lt=it.price*it.qty;total+=lt;const ks=esc(k);
+    return `<tr><td><span class="item-name-cell">${it.en}</span><span class="item-so-cell">${it.so}</span></td><td style="text-align:center"><div class="qty-ctrl" style="justify-content:center"><button class="qty-btn" onclick="changeQty('${ks}',-1)">−</button><span class="qty-num">${it.qty}</span><button class="qty-btn" onclick="changeQty('${ks}',1)">+</button></div></td><td class="price-cell">$${it.price}</td><td class="price-cell">$${lt}</td></tr>`;
+  }).join('');
+  document.getElementById('cart-tfoot').innerHTML=`<tr class="total-row"><td colspan="3">TOTAL · WADARTA</td><td class="total-amount">$${total}</td></tr>`;
+}
+function submitOrder(){
+  const name=document.getElementById('cust-name').value.trim();
+  const phone=document.getElementById('cust-phone').value.trim();
+  if(!name){showToast('Enter customer name');return;}
+  if(!Object.keys(cart).length){showToast('Select at least one item');return;}
+  const now=new Date();const items=Object.values(cart).map(i=>({...i}));
+  const total=items.reduce((s,i)=>s+i.price*i.qty,0);
+  orders.unshift({id:counter++,name,phone,items,total,notes:document.getElementById('order-notes').value.trim(),status:'pending',time:now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+  cart={};
+  ['cust-name','cust-phone','order-notes'].forEach(id=>document.getElementById(id).value='');
+  renderCart();buildItemsGrid();showToast('Order placed!');
+}
+function setFilter(f,btn){kFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderKitchen();}
+function advanceStatus(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  const i=STATUSES.indexOf(o.status);if(i<STATUSES.length-1)o.status=STATUSES[i+1];
+  renderKitchen();renderDisplay();if(o.status==='ready')showToast('Order #'+o.id+' READY!');
+}
+function sendWhatsApp(id){
+  const o=orders.find(x=>x.id===id);if(!o||!o.phone){showToast('No phone number');return;}
+  const msg=config.wamsg.replace(/{name}/g,o.name).replace(/{id}/g,o.id);
+  window.open(`https://wa.me/${o.phone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+function renderKitchen(){
+  const active=orders.filter(o=>o.status!=='collected').length;
+  document.getElementById('active-count').textContent=active+' active';
+  const list=kFilter==='all'?orders:orders.filter(o=>o.status===kFilter);
+  const el=document.getElementById('kitchen-orders');
+  if(!list.length){el.innerHTML=`<div class="empty-state"><div style="font-size:44px">🥩</div><p>No orders yet</p></div>`;return;}
+  el.innerHTML=list.map(o=>{
+    const next=STATUSES[STATUSES.indexOf(o.status)+1];const nL=next?STATUS_LABELS[next]:null;
+    const nb=nL?`<button class="action-btn ${o.status==='preparing'?'ready-btn':'step-btn'}" onclick="advanceStatus(${o.id})">Mark: ${nL.en}<span class="btn-so">${nL.so}</span></button>`:`<button class="action-btn" disabled>Collected</button>`;
+    const wa=o.status==='ready'&&o.phone?`<button class="action-btn wa-btn" onclick="sendWhatsApp(${o.id})">WhatsApp Notify<span class="btn-so">Soo wac macmiilka</span></button>`:'';
+    const items=o.items.map(it=>`<div class="order-item-line"><div class="order-item-left"><span class="order-item-qty">${it.qty}x</span><span>${it.en} <span style="color:rgba(255,255,255,0.4);font-size:12px">${it.so}</span></span></div><span class="order-item-price">$${it.price*it.qty}</span></div>`).join('');
+    return `<div class="order-card"><div class="order-card-header"><div><div class="order-num-big">#${o.id}</div><div class="order-name-k">${o.name}</div><div class="order-phone-k">${o.phone||'No phone'}</div></div><div style="text-align:right"><span class="status-badge status-${o.status}">${STATUS_LABELS[o.status].en} · ${STATUS_LABELS[o.status].so}</span><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px">${o.time}</div></div></div><div class="order-items-list">${items}<div class="order-total-line"><span>Total · Wadarta</span><span class="order-total-amt">$${o.total}</span></div>${o.notes?`<div class="order-notes-k">Note: ${o.notes}</div>`:''}</div><div class="order-actions">${nb}${wa}</div></div>`;
+  }).join('');
+}
+function renderDisplay(){
+  const active=orders.filter(o=>o.status!=='collected');const ready=orders.filter(o=>o.status==='ready');
+  const latest=ready[0]||active[0]||null;
+  document.getElementById('display-num').textContent=latest?'#'+latest.id:'—';
+  document.getElementById('display-name').textContent=latest?latest.name:'No active orders';
+  const st=document.getElementById('display-status');
+  if(latest){const sl=STATUS_LABELS[latest.status];st.textContent=sl.en+' · '+sl.so;st.className='display-status-big ds-'+latest.status;st.style.display='inline-block';}else st.style.display='none';
+  const q=orders.filter(o=>o.status!=='collected').slice(0,12);
+  document.getElementById('queue-grid').innerHTML=q.length?q.map(o=>`<div class="queue-card${o.status==='ready'?' is-ready':''}"><div class="queue-card-num">#${o.id}</div><div class="queue-card-name">${o.name.split(' ')[0]}</div><div style="font-size:10px;color:${o.status==='ready'?'rgba(255,255,255,0.65)':'rgba(255,255,255,0.3)'};margin-top:2px">${STATUS_LABELS[o.status].en}</div></div>`).join(''):`<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.3);padding:20px">No active orders</div>`;
+}
+function renderSettingsEditor(){
+  document.getElementById('set-name').value=config.name;
+  document.getElementById('set-sub1').value=config.sub1;
+  document.getElementById('set-sub2').value=config.sub2;
+  document.getElementById('set-wamsg').value=config.wamsg;
+  document.getElementById('color-swatches').innerHTML=ACCENT_COLORS.map(c=>`<div class="color-swatch${c===config.accent?' active':''}" style="background:${c}" onclick="selectColor('${c}',this)"></div>`).join('');
+  renderMenuEditor();
+}
+function selectColor(c,el){config.accent=c;document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));el.classList.add('active');document.documentElement.style.setProperty('--gold',c);}
+function renderMenuEditor(){
+  const cats=Object.keys(config.menu);
+  document.getElementById('menu-editor').innerHTML=cats.map((cat,ci)=>{
+    const items=config.menu[cat];
+    const itemRows=items.map((it,ii)=>`<div class="item-editor-row"><input type="text" value="${it.en}" onchange="updateItem(${ci},${ii},'en',this.value)"/><input type="text" value="${it.so}" onchange="updateItem(${ci},${ii},'so',this.value)"/><input type="number" class="price-inp" value="${it.price}" min="1" onchange="updateItem(${ci},${ii},'price',parseFloat(this.value)||5)"/><button class="icon-btn del-btn" onclick="deleteItem(${ci},${ii})">✕</button></div>`).join('');
+    return `<div class="cat-editor"><div class="cat-editor-head"><input type="text" value="${cat}" style="flex:1;margin-right:8px;font-size:13px;padding:7px 10px;font-weight:700;" onchange="updateCat(${ci},this.value)"/><button class="icon-btn del-btn" onclick="deleteCat(${ci})">✕</button></div><div class="items-editor">${itemRows}</div><button class="add-item-btn" onclick="addItem(${ci})">+ Add item</button></div>`;
+  }).join('');
+}
+function updateCat(ci,val){const cats=Object.keys(config.menu);const old=cats[ci];const newMenu={};cats.forEach((c,i)=>{newMenu[i===ci?val:c]=config.menu[c];});config.menu=newMenu;if(currentCat===old)currentCat=val;}
+function deleteCat(ci){const cats=Object.keys(config.menu);if(cats.length<=1){showToast('Need at least one');return;}delete config.menu[cats[ci]];if(currentCat===cats[ci])currentCat=Object.keys(config.menu)[0]||'';renderMenuEditor();}
+function addItem(ci){const cats=Object.keys(config.menu);config.menu[cats[ci]].push({en:'New Item',so:'Shay Cusub',price:5});renderMenuEditor();}
+function deleteItem(ci,ii){const cats=Object.keys(config.menu);config.menu[cats[ci]].splice(ii,1);renderMenuEditor();}
+function updateItem(ci,ii,field,val){const cats=Object.keys(config.menu);config.menu[cats[ci]][ii][field]=val;}
+function addCategory(){config.menu['New Category / Qaybta Cusub']=[{en:'Item 1',so:'Shay 1',price:5}];renderMenuEditor();}
+function saveSettings(){
+  config.name=document.getElementById('set-name').value||config.name;
+  config.sub1=document.getElementById('set-sub1').value||config.sub1;
+  config.sub2=document.getElementById('set-sub2').value||config.sub2;
+  config.wamsg=document.getElementById('set-wamsg').value||config.wamsg;
+  persistConfig();applyConfig();showToast('Saved!');
+}
+function esc(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// Init
+checkTrial();
+applyConfig();
+renderKitchen();
+renderDisplay();
+
+// Re-check trial every hour
+setInterval(checkTrial, 3600000);
+
+// Ready for deployment
+</script>
+</body>
+</html>
